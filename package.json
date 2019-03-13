@@ -1,0 +1,33 @@
+{
+	"name": "pwa-gram",
+	"version": "1.0.0",
+	"description": "A simple clone of Instagram",
+	"main": "index.js",
+	"scripts": {
+		"start": "http-server -c-1"
+	},
+	"keywords": ["pwa", "progressive", "web", "app"],
+	"author": "Maximilian Schwarzmüller",
+	"license": "ISC",
+	"devDependencies": {
+		"http-server": "^0.10.0"
+	},
+	"maintainers": ["mfcarneiro"],
+	"prettier": {
+		"prettier.jsxBracketSameLine": true,
+		"prettier.jsxSingleQuote": true,
+		"prettier.singleQuote": true,
+		"prettier.semi": true,
+		"prettier.eslintIntegration": true,
+		"prettier.endOfLine": "auto",
+		"prettier.jsonEnable": ["json"],
+		"prettier.useTabs": true,
+		"prettier.noSpaceEmptyFn": true,
+		"prettier.flattenTernaries": true,
+		"prettier.breakProperty": true,
+		"prettier.javascriptEnable": ["javascript"],
+		"prettier.trailingComma": "all",
+		"prettier.bracesSpacing": true,
+		"prettier.bracketSpacing": false
+	}
+}
