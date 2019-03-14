@@ -1,28 +1,27 @@
-const CACHE_STATIC_NAME = 'static-v4';
+const CHANGE_STATIC_CACHE = 'static-v3';
 const CHANGE_DYNAMIC_NAME = 'dynamic-v2';
+const STATIC_FILES = [
+	'/',
+	'/fallback-page.html',
+	'/index.html',
+	'/src/js/app.js',
+	'/src/js/feed.js',
+	'/src/js/material.min.js',
+	'/src/css/app.css',
+	'/src/css/feed.css',
+	'/src/images/main-image.jpg',
+	'https://fonts.googleapis.com/css?family=Roboto:400,700',
+	'https://fonts.googleapis.com/icon?family=Material+Icons',
+	'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css',
+];
 
 self.addEventListener('install', event => {
 	console.log('Installing Service Worker...', event);
 	event.waitUntil(
-		caches.open(CACHE_STATIC_NAME).then(cache => {
+		caches.open(CHANGE_STATIC_CACHE).then(cache => {
 			console.log('[Service Worker] - Pre-caching App Shell');
 			// It's all about requests, not file paths!!
-			// cache.add('/');
-			// cache.add('/index.html');
-			// cache.add('/src/js/app.js');
-			cache.addAll([
-				'/',
-				'/index.html',
-				'/src/js/app.js',
-				'/src/js/feed.js',
-				'/src/js/material.min.js',
-				'/src/css/app.css',
-				'/src/css/feed.css',
-				'/src/images/main-image.jpg',
-				'https://fonts.googleapis.com/css?family=Roboto:400,700',
-				'https://fonts.googleapis.com/icon?family=Material+Icons',
-				'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css',
-			]);
+			cache.addAll(STATIC_FILES);
 		}),
 	);
 });
@@ -33,8 +32,8 @@ self.addEventListener('activate', event => {
 		caches.keys().then(keyList => {
 			return Promise.all(
 				keyList.map(key => {
-					if (key !== CACHE_STATIC_NAME && key !== CHANGE_DYNAMIC_NAME) {
-						console.log('[Service Worker] - Removing odl cache');
+					if (key !== CHANGE_STATIC_CACHE && key !== CHANGE_DYNAMIC_NAME) {
+						console.log('[Service Worker] - Removing old cache');
 						caches.delete(key);
 					}
 				}),
@@ -45,25 +44,117 @@ self.addEventListener('activate', event => {
 });
 
 // Non-Lifecycle events
+
+// NOTE: Cache, then Network
 self.addEventListener('fetch', event => {
 	// Overwrite what you want to respond
 	// request are our keys
-	event.respondWith(
-		caches.match(event.request).then(response => {
-			if (response) {
-				return response;
-			} else {
-				return fetch(event.request)
-					.then(dynamicResponse => {
-						caches.open(CHANGE_DYNAMIC_NAME).then(cache => {
-							cache.put(event.request.url, dynamicResponse.clone());
-							return dynamicResponse;
+	const url = 'https://httpin.org/get';
+
+	if (event.request.url.indexOf(url) > -1) {
+		event.respondWith(
+			caches.open(CHANGE_DYNAMIC_NAME).then(cache => {
+				return fetch(event.request).then(response => {
+					cache.put(event.request, response.clone());
+					return response;
+				});
+			}),
+		);
+	} else if (new RegExp(`\\b ${STATIC_FILES.join('\\b|\\b')} \\b`).test(event.request.url)) {
+		event.respondWith(caches.match(event.request));
+	} else {
+		// Network fallback strategy
+		event.respondWith(
+			caches.match(event.request).then(response => {
+				if (response) {
+					return response;
+				} else {
+					return fetch(event.request)
+						.then(dynamicResponse => {
+							return caches.open(CHANGE_DYNAMIC_NAME).then(cache => {
+								cache.put(event.request.url, dynamicResponse.clone());
+								return dynamicResponse;
+							});
+						})
+						.catch(() => {
+							return caches.open(CHANGE_STATIC_CACHE).then(cache => {
+								if (event.request.url.indexOf('/help')) {
+									return cache.match('/fallback-page.html');
+								}
+							});
 						});
-					})
-					.catch(err => {
-						console.log(err);
-					});
-			}
-		}),
-	);
+				}
+			}),
+		);
+	}
 });
+
+// NOTE: Network with cache Fallback Strategy
+// !!!: Only use this approach when it's not needed
+// to be present fast for the user.
+// e.g: Running on the background
+
+/* self.addEventListener("fetch", event => {
+		fetch(event.request).catch(() => {
+    	event.respondWith(caches.match(event.request));
+   	});
+ 	});
+*/
+
+// !!!: Can be used in a few usage cases
+// self.addEventListener('fetch', event => {
+// 	fetch(event.request)
+// 		.catch(() => {
+// 			event.respondWith(caches.match(event.request));
+// 		})
+// 		.then(response => {
+// 			return caches.open(CHANGE_DYNAMIC_NAME).then(cache => {
+// 				cache.put(event.request.url, response.clone());
+// 				return response;
+// 			});
+// 		});
+// });
+// ---
+
+/* NOTE: Network-only strategy
+// self.addEventListener('fetch', event => {
+// 	event.respondWith(fetch(event.request));
+// });
+--- */
+
+/* NOTE: Cache only - offline method
+// Do not use this strategy, not recommended in most cases 
+// (instead of install event files)
+
+// self.addEventListener('fetch', event => {
+// 	event.respondWith(caches.match(event.request));
+// });
+--- */
+
+// NOTE: Fallback method with offline page
+/* 
+self.addEventListener("fetch", event => {
+  // Overwrite what you want to respond
+  // request are our keys
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      if (response) {
+        return response;
+      } else {
+        return fetch(event.request)
+          .then(dynamicResponse => {
+            return caches.open(CHANGE_DYNAMIC_NAME).then(cache => {
+              cache.put(event.request.url, dynamicResponse.clone());
+              return dynamicResponse;
+            });
+          })
+          .catch(() => {
+            return caches.open(CHANGE_STATIC_CACHE).then(cache => {
+              return cache.match("/fallback-page.html");
+            });
+          });
+      }
+    })
+  );
+});
+*/
