@@ -7,15 +7,13 @@
 		"start": "http-server -c-1"
 	},
 	"keywords": ["pwa", "progressive", "web", "app"],
-	"author": "Maximilian Schwarzmüller",
-	"license": "ISC",
+	"author": "Matheus Felipe",
+	"license": "MIT",
 	"devDependencies": {
 		"http-server": "^0.10.0"
 	},
 	"maintainers": ["mfcarneiro"],
 	"prettier": {
-		"prettier.jsxBracketSameLine": true,
-		"prettier.jsxSingleQuote": true,
 		"prettier.singleQuote": true,
 		"prettier.semi": true,
 		"prettier.eslintIntegration": true,

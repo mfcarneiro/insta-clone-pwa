@@ -3,7 +3,7 @@ const createPostArea = document.querySelector('#create-post');
 const sharedMomentsArea = document.querySelector('#shared-moments');
 const closeCreatePostModalButton = document.querySelector('#close-create-post-modal-btn');
 
-openCreatePostModal = () => {
+const openCreatePostModal = () => {
 	createPostArea.style.display = 'block';
 
 	if (deferredPrompt) {
@@ -23,19 +23,34 @@ openCreatePostModal = () => {
 	}
 };
 
-closeCreatePostModal = () => {
+const closeCreatePostModal = () => {
 	createPostArea.style.display = 'none';
 };
+// saves cache on demand otherwise
+// function onSaveButtonClicked() {
+//  console.log('clicked');
+//    if ('caches' in window) {
+//      caches.open('user-requested')
+//        .then(cache => {
+//        caches.addAll(['https://httpbin.org/get', '/src/images/sf-boat.jpg']);
+//      });
+//  }
+// };
 
 shareImageButton.addEventListener('click', openCreatePostModal);
 closeCreatePostModalButton.addEventListener('click', closeCreatePostModal);
 
-createCard = () => {
+const clearCard = () => {
+  while(sharedMomentsArea.hasChildNodes()) {
+    sharedMomentsArea.removeChild(sharedMomentsArea.lastChild);
+  }
+};
+const createCard = () => {
 	const cardWrapper = document.createElement('div');
 	cardWrapper.className = 'shared-moment-card mdl-card mdl-shadow--2dp';
 
 	const cardTitle = document.createElement('div');
-	cardTitle.className = 'mdl-card__title';
+	cardTitle.className = 'mdl-card__title text-center';
 	cardTitle.style.backgroundImage = 'url("/src/images/sf-boat.jpg")';
 	cardTitle.style.backgroundSize = 'cover';
 	cardTitle.style.height = '180px';
@@ -45,24 +60,58 @@ createCard = () => {
 	const cardTitleTextElement = document.createElement('h2');
 	cardTitleTextElement.style.color = 'white';
 	cardTitleTextElement.className = 'mdl-card__title-text';
-	cardTitleTextElement.textContent = 'San Francisco Trip';
+  cardTitleTextElement.textContent = 'San Francisco Trip';
 
 	cardTitle.appendChild(cardTitleTextElement);
 
 	const cardSupportingText = document.createElement('div');
 	cardSupportingText.className = 'mdl-card__supporting-text';
 	cardSupportingText.textContent = 'In San Francisco';
-	cardSupportingText.style.textAlign = 'center';
+  cardSupportingText.style.textAlign = 'center';
+
+// const cardSaveButton = document.createElement('button');
+// cardSaveButton.textContent = 'Save';
+// cardSaveButton.addEventListener('click', onSaveButtonClicked);
+// cardSupportingText.appendChild(cardSaveButton);
 
 	cardWrapper.appendChild(cardSupportingText);
 	componentHandler.upgradeElement(cardWrapper);
 	sharedMomentsArea.appendChild(cardWrapper);
 };
 
-fetch('https://httpbin.org/get')
+const url = 'https://httpbin.org/get';
+const networkDataReceive = false;
+
+fetch('https://httpbin.org/get', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  },
+  body: JSON.stringify({
+    message: 'A message'
+  })
+})
 	.then(res => {
 		return res.json();
 	})
 	.then(data => {
+    clearCard();
 		createCard();
-	});
+  });
+
+if ('caches' in window) {
+  caches.match(url)
+    .then(response => {
+      if (response) {
+        return response.json();
+      }
+    })
+    .then(data => {
+      if (!networkDataReceive) {
+        clearCard();
+        createCard(); 
+      }
+    })
+};
+
