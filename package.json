@@ -1,31 +1,25 @@
 {
-	"name": "pwa-gram",
-	"version": "1.0.0",
-	"description": "A simple clone of Instagram",
-	"main": "index.js",
-	"scripts": {
-		"start": "http-server -c-1"
-	},
-	"keywords": ["pwa", "progressive", "web", "app"],
-	"author": "Matheus Felipe",
-	"license": "MIT",
-	"devDependencies": {
-		"http-server": "^0.10.0"
-	},
-	"maintainers": ["mfcarneiro"],
-	"prettier": {
-		"prettier.singleQuote": true,
-		"prettier.semi": true,
-		"prettier.eslintIntegration": true,
-		"prettier.endOfLine": "auto",
-		"prettier.jsonEnable": ["json"],
-		"prettier.useTabs": true,
-		"prettier.noSpaceEmptyFn": true,
-		"prettier.flattenTernaries": true,
-		"prettier.breakProperty": true,
-		"prettier.javascriptEnable": ["javascript"],
-		"prettier.trailingComma": "all",
-		"prettier.bracesSpacing": true,
-		"prettier.bracketSpacing": false
-	}
+  "name": "pwa-gram",
+  "version": "1.0.0",
+  "description": "A simple clone of Instagram",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server -c-1"
+  },
+  "keywords": [
+    "pwa",
+    "progressive",
+    "web",
+    "app"
+  ],
+  "author": "Matheus Felipe",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.1.0",
+    "http-server": "^0.10.0"
+  },
+  "maintainers": [
+    "mfcarneiro"
+  ]
 }
