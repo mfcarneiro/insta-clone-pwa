@@ -83,8 +83,8 @@ self.addEventListener('fetch', event => {
 						for (let key in data) {
 							writeData(data[key]);
 						}
-});
-return response;
+					});
+				return response;
 			})
 		);
 	} else if (isInArray(event.request.url, STATIC_FILES)) {
