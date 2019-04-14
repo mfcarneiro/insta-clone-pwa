@@ -4,13 +4,12 @@ const closeCreatePostModalButton = document.querySelector(
 	'#close-create-post-modal-btn'
 );
 const sharedMomentsArea = document.querySelector('#shared-moments');
+const form = document.querySelector('form');
+const titleInput = document.querySelector('#title');
+const locationInput = document.querySelector('#location');
 
 function openCreatePostModal() {
-  createPostArea.style.display = 'block';
-
-	setTimeout(() => {
-		createPostArea.style.transform = 'translateY(0)';
-	}, 1);
+	createPostArea.style.transform = 'translateY(0)';
 
 	if (deferredPrompt) {
 		deferredPrompt.prompt();
@@ -31,7 +30,7 @@ function openCreatePostModal() {
 	// if ('serviceWorker' in navigator) {
 	//   navigator.serviceWorker.getRegistrations()
 	//     .then(function(registrations) {
-	//       for (var i = 0; i < registrations.length; i++) {
+	//       for (let i = 0; i < registrations.length; i++) {
 	//         registrations[i].unregister();
 	//       }
 	//     })
@@ -39,18 +38,15 @@ function openCreatePostModal() {
 }
 
 function closeCreatePostModal() {
-  createPostArea.style.transform = 'translateY(100vh)';
-  createPostArea.style.display = 'none';
+	createPostArea.style.transform = 'translateY(100vh)';
 }
 
 shareImageButton.addEventListener('click', openCreatePostModal);
-
 closeCreatePostModalButton.addEventListener('click', closeCreatePostModal);
 
 // Currently not in use, allows to save assets in cache on demand otherwise
 function onSaveButtonClicked(event) {
 	console.log('clicked');
-
 	if ('caches' in window) {
 		caches.open('user-requested').then(function(cache) {
 			cache.add('https://httpbin.org/get');
@@ -66,14 +62,13 @@ function clearCards() {
 }
 
 function createCard(data) {
-	const cardWrapper = document.createElement('div');
+	let cardWrapper = document.createElement('div');
 	cardWrapper.className = 'shared-moment-card mdl-card mdl-shadow--2dp';
 
 	let cardTitle = document.createElement('div');
 	cardTitle.className = 'mdl-card__title';
 	cardTitle.style.backgroundImage = 'url(' + data.image + ')';
 	cardTitle.style.backgroundSize = 'cover';
-	cardTitle.style.height = '180px';
 	cardWrapper.appendChild(cardTitle);
 
 	let cardTitleTextElement = document.createElement('h2');
@@ -86,10 +81,12 @@ function createCard(data) {
 	cardSupportingText.className = 'mdl-card__supporting-text';
 	cardSupportingText.textContent = data.location;
 	cardSupportingText.style.textAlign = 'center';
-	// var cardSaveButton = document.createElement('button');
+
+	// let cardSaveButton = document.createElement('button');
 	// cardSaveButton.textContent = 'Save';
 	// cardSaveButton.addEventListener('click', onSaveButtonClicked);
 	// cardSupportingText.appendChild(cardSaveButton);
+
 	cardWrapper.appendChild(cardSupportingText);
 	componentHandler.upgradeElement(cardWrapper);
 	sharedMomentsArea.appendChild(cardWrapper);
@@ -97,6 +94,7 @@ function createCard(data) {
 
 function updateUI(data) {
 	clearCards();
+
 	for (let i = 0; i < data.length; i++) {
 		createCard(data[i]);
 	}
@@ -111,7 +109,7 @@ fetch(url)
 	})
 	.then(function(data) {
 		networkDataReceived = true;
-
+		console.log('From web', data);
 		const dataArray = [];
 		for (let key in data) {
 			dataArray.push(data[key]);
@@ -119,22 +117,68 @@ fetch(url)
 		updateUI(dataArray);
 	});
 
-if ('caches' in window) {
-	caches
-		.match(url)
-		.then(function(response) {
-			if (response) {
-				return response.json();
-			}
-		})
-		.then(function(data) {
+if ('indexedDB' in window) {
+	readAllData('posts').then(function(data) {
+		if (!networkDataReceived) {
 			console.log('From cache', data);
-			if (!networkDataReceived) {
-				const dataArray = [];
-				for (let key in data) {
-					dataArray.push(data[key]);
-				}
-				updateUI(dataArray);
-			}
-		});
+			updateUI(data);
+		}
+	});
 }
+
+function sendData() {
+	fetch('https://us-central1-pwagram-99adf.cloudfunctions.net/storePostData', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Accept: 'application/json',
+		},
+		body: JSON.stringify({
+			id: new Date().toISOString(),
+			title: titleInput.value,
+			location: locationInput.value,
+			image:
+				'https://firebasestorage.googleapis.com/v0/b/pwagram-99adf.appspot.com/o/sf-boat.jpg?alt=media&token=19f4770c-fc8c-4882-92f1-62000ff06f16',
+		}),
+	}).then(function(res) {
+		console.log('Sent data', res);
+		updateUI();
+	});
+}
+
+form.addEventListener('submit', event => {
+	event.preventDefault();
+
+	if (titleInput.value.trim() === '' || locationInput.value.trim() === '') {
+		alert('Please enter valid data!');
+		return;
+	}
+
+	closeCreatePostModal();
+
+	if ('serviceWorker' in navigator && 'SyncManager' in window) {
+		navigator.serviceWorker.ready.then(function(sw) {
+			const post = {
+				id: new Date().toISOString(),
+				title: titleInput.value,
+				location: locationInput.value,
+			};
+			writeData('sync-posts', post)
+				.then(function() {
+					return sw.sync.register('sync-new-posts');
+				})
+				.then(function() {
+					const snackbarContainer = document.querySelector(
+						'#confirmation-toast'
+					);
+					const data = { message: 'Your Post was saved for syncing!' };
+					snackbarContainer.MaterialSnackbar.showSnackbar(data);
+				})
+				.catch(function(err) {
+					console.log(err);
+				});
+		});
+	} else {
+		sendData();
+	}
+});

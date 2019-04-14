@@ -1,2 +1,7 @@
 .idea
 node_modules
+.firebase
+.env
+.firebaserc
+firebase.json
+
