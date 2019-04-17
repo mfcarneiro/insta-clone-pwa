@@ -47,6 +47,7 @@ closeCreatePostModalButton.addEventListener('click', closeCreatePostModal);
 // Currently not in use, allows to save assets in cache on demand otherwise
 function onSaveButtonClicked(event) {
 	console.log('clicked');
+
 	if ('caches' in window) {
 		caches.open('user-requested').then(function(cache) {
 			cache.add('https://httpbin.org/get');
