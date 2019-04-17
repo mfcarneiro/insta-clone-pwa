@@ -1,7 +1,7 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
-const CACHE_STATIC_NAME = 'static-v24';
+const CACHE_STATIC_NAME = 'static-v32';
 const CACHE_DYNAMIC_NAME = 'dynamic-v2';
 const STATIC_FILES = [
 	'/',
@@ -49,7 +49,8 @@ self.addEventListener('activate', function(event) {
 });
 
 function isInArray(string, array) {
-	var cachePath;
+	let cachePath;
+
 	if (string.indexOf(self.origin) === 0) {
 		// request targets domain where we serve the page from (i.e. NOT a CDN)
 		console.log('matched ', string);
@@ -61,17 +62,18 @@ function isInArray(string, array) {
 }
 
 self.addEventListener('fetch', function(event) {
-	var url = 'https://pwa-gram-84973.firebaseio.com/posts';
+	const url = 'https://pwa-gram-84973.firebaseio.com/posts';
+
 	if (event.request.url.indexOf(url) > -1) {
 		event.respondWith(
 			fetch(event.request).then(function(res) {
-				var clonedRes = res.clone();
+				const clonedRes = res.clone();
 				clearAllData('posts')
 					.then(function() {
 						return clonedRes.json();
 					})
 					.then(function(data) {
-						for (var key in data) {
+						for (let key in data) {
 							writeData('posts', data[key]);
 						}
 					});
@@ -108,8 +110,10 @@ self.addEventListener('fetch', function(event) {
 
 self.addEventListener('sync', function(event) {
 	console.log('[Service Worker] Background syncing', event);
+
 	if (event.tag === 'sync-new-posts') {
 		console.log('[Service Worker] Syncing new Posts');
+
 		event.waitUntil(
 			readAllData('sync-posts').then(function(data) {
 				for (let dt of data) {
@@ -147,6 +151,70 @@ self.addEventListener('sync', function(event) {
 	}
 });
 
+self.addEventListener('notificationclick', function(event) {
+	const notification = event.notification;
+	const action = notification.action;
+
+	// Same used on app.js, when registering on the notification
+	if (action === 'confirm') {
+		console.log('Confirm was chosen!');
+	} else {
+		event.waitUntil(
+			clients.matchAll().then(function(reachedClients) {
+				const client = reachedClients.find(function(findClient) {
+					return findClient.visibilityState === 'visible';
+				});
+
+				if (client !== undefined) {
+					findClient.navigate(notification.data.url);
+					findClient.focus();
+				} else {
+					clients.openWindow(notification.data.url);
+				}
+				notification.close();
+			})
+		);
+	}
+
+	notification.close();
+	event.waitUntil();
+});
+
+self.addEventListener('push', function(event) {
+	let data = {
+		title: 'New post!',
+		content: 'Something new happened!',
+		openUrl: '/',
+	};
+
+	if (event.data) {
+		data = JSON.parse(event.data.text());
+	}
+	const notificationOptions = {
+		body: data.content,
+		icon: '/src/images/icons/app-icon-96x96x.png',
+		badge: '/src/images/icons/app-icon-96x96x.png',
+		// * Extra metadata that can be accessed by notification api and be used
+		// * to redirect to the wanted url
+		data: {
+			url: data.openUrl,
+		},
+	};
+
+	event.waitUntil(
+		self.registration.showNotification(data.title, notificationOptions)
+	);
+});
+
+// NOTE: Use case for analytics, get the data of user that why not interacted or used the notification
+// self.addEventListener('notificationclose', event => {
+// 	event.notification.close();
+// 	event.waitUntil(
+
+// 	);
+// });
+
+// !Cache strategies below
 // self.addEventListener('fetch', function(event) {
 //   event.respondWith(
 //     caches.match(event.request)
