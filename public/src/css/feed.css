@@ -20,7 +20,11 @@
 	margin: auto;
 }
 
-#create-post #pick-image {
+#create-post #location-loader {
+	display: none;
+}
+
+#pick-image {
 	display: none;
 }
 
@@ -55,13 +59,6 @@
 	margin: 10px auto;
 	/*width: 270px;*/
 	width: 80%;
-}
-
-/* Media queries */
-@media (min-width: 600px) {
-	.shared-moment-card.mdl-card {
-		width: 60%;
-	}
 }
 
 @media (min-width: 1000px) {

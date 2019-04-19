@@ -21,5 +21,8 @@
   },
   "maintainers": [
     "mfcarneiro"
-  ]
+  ],
+  "dependencies": {
+    "workbox-cli": "^2"
+  }
 }
