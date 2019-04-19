@@ -1,8 +1,8 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
-const CACHE_STATIC_NAME = 'static-v33';
-const CACHE_DYNAMIC_NAME = 'dynamic-v3';
+const CACHE_STATIC_NAME = 'static-v35';
+const CACHE_DYNAMIC_NAME = 'dynamic-v4';
 const STATIC_FILES = [
 	'/',
 	'/index.html',
@@ -63,6 +63,7 @@ function isInArray(string, array) {
 }
 
 self.addEventListener('fetch', function(event) {
+	calc;
 	const url = 'https://pwa-gram-84973.firebaseio.com/posts';
 
 	if (event.request.url.indexOf(url) > -1) {
@@ -122,6 +123,8 @@ self.addEventListener('sync', function(event) {
 					postData.append('id', dt.id);
 					postData.append('title', dt.title);
 					postData.append('location', dt.location);
+					postData.append('rawLocationLat', dt.rawLocation.lat);
+					postData.append('rawLocationLng', dt.rawLocation.lng);
 					postData.append('file', dt.picture, dt.id + '.png');
 
 					fetch(

@@ -12,7 +12,14 @@ const canvasElement = document.querySelector('#canvas');
 const captureButton = document.querySelector('#capture-btn');
 const imagePicker = document.querySelector('#image-picker');
 const imagePickArea = document.querySelector('#pick-image');
-let picture = undefined;
+const locationBtn = document.querySelector('#location-btn');
+const locationLoader = document.querySelector('#location-loader');
+const manualLocationDiv = document.querySelector('#manual-location');
+let picture;
+let fetchLocation = {
+	lat: 0,
+	lng: 0,
+};
 
 function initializeMedia() {
 	if (!('mediaDevices' in navigator)) {
@@ -47,6 +54,48 @@ function initializeMedia() {
 		});
 }
 
+function initializeLocation() {
+	if (!('geolocation' in navigator)) {
+		locationBtn.style.display = 'none';
+	}
+}
+
+locationBtn.addEventListener('click', function(event) {
+	if (!('geolocation' in navigator)) {
+		return;
+	}
+	let isLocationAlerted = false;
+
+	locationBtn.style.display = 'none';
+	locationLoader.style.display = 'block';
+
+	navigator.geolocation.getCurrentPosition(
+		function(position) {
+			locationBtn.style.display = 'inline';
+			locationLoader.style.display = 'none';
+
+			fetchLocation = {
+				lat: position.coords.latitude,
+				lng: position.coords.longitude,
+			};
+
+			locationInput.value = 'in Blumenau';
+			manualLocationDiv.classList.add('is-focused');
+		},
+		function(err) {
+			locationBtn.style.display = 'inline';
+			locationLoader.style.display = 'none';
+			fetchLocation = { lat: 0, lng: 0 };
+
+			if (!isLocationAlerted) {
+				alert("Couldn't find your location, please enter manually");
+				isLocationAlerted = true;
+			}
+		},
+		{ timeout: 5000 }
+	);
+});
+
 captureButton.addEventListener('click', function(event) {
 	canvasElement.style.display = 'block';
 	videoPlayer.style.display = 'none';
@@ -61,16 +110,22 @@ captureButton.addEventListener('click', function(event) {
 		videoPlayer.videoHeight / (videoPlayer.videoWidth / canvas.width)
 	);
 
-	videoPlayer.srcObject.getVideoTracks().forEach(function(track) {
-		track.stop();
-	});
+	closeVideoStream();
 
 	picture = dataURItoBlob(canvasElement.toDataURL());
 });
 
+imagePicker.addEventListener('change', function(event) {
+	picture = event.target.files[0];
+});
+
 function openCreatePostModal() {
-	createPostArea.style.transform = 'translateY(0)';
+	setTimeout(function() {
+		createPostArea.style.transform = 'translateY(0)';
+	}, 1);
+
 	initializeMedia();
+	initializeLocation();
 
 	if (deferredPrompt) {
 		deferredPrompt.prompt();
@@ -99,10 +154,18 @@ function openCreatePostModal() {
 }
 
 function closeCreatePostModal() {
-	createPostArea.style.transform = 'translateY(100vh)';
 	imagePickArea.style.display = 'none';
 	videoPlayer.style.display = 'none';
 	canvasElement.style.display = 'none';
+	locationBtn.style.display = 'inline';
+	locationLoader.style.display = 'none';
+	captureButton.style.display = 'inline';
+
+	closeVideoStream();
+
+	setTimeout(function() {
+		createPostArea.style.transform = 'translateY(100vh)';
+	}, 1);
 }
 
 shareImageButton.addEventListener('click', openCreatePostModal);
@@ -176,6 +239,7 @@ fetch(url)
 		networkDataReceived = true;
 		console.log('From web', data);
 		const dataArray = [];
+
 		for (let key in data) {
 			dataArray.push(data[key]);
 		}
@@ -198,9 +262,11 @@ function sendData() {
 	postData.append('id', postDataId);
 	postData.append('title', titleInput.value);
 	postData.append('location', locationInput.value);
+	postData.append('rawLocationLat', fetchLocation.lat);
+	postData.append('rawLocationLng', fetchLocation.lng);
 	postData.append('file', picture, postDataId + '.png');
 
-	fetch('https://us-central1-pwagram-99adf.cloudfunctions.net/storePostData', {
+	fetch('https://us-central1-pwa-gram-84973.cloudfunctions.net/storePostData', {
 		method: 'POST',
 		body: postData,
 	}).then(function(res) {
@@ -226,6 +292,7 @@ form.addEventListener('submit', event => {
 				title: titleInput.value,
 				location: locationInput.value,
 				picture: picture,
+				rawLocation: fetchLocation,
 			};
 			writeData('sync-posts', post)
 				.then(function() {
@@ -246,3 +313,13 @@ form.addEventListener('submit', event => {
 		sendData();
 	}
 });
+
+function closeVideoStream() {
+	const videoPlayerSource = videoPlayer.srcObject;
+
+	if (videoPlayerSource) {
+		videoPlayerSource.getVideoTracks().forEach(function(track) {
+			track.stop();
+		});
+	}
+}

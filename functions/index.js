@@ -76,6 +76,10 @@ exports.storePostData = functions.https.onRequest(function(request, response) {
 								id: fields.id,
 								title: fields.title,
 								location: fields.location,
+								rawLocation: {
+									lat: fields.rawLocationLat,
+									lng: fields.rawLocationLng,
+								},
 								// prettier-ignore
 								image: `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(uploadedFile.name)}?alt=media&token=${uuid}`
 							})
