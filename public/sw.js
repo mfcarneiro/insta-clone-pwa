@@ -1,13 +1,14 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
-const CACHE_STATIC_NAME = 'static-v32';
-const CACHE_DYNAMIC_NAME = 'dynamic-v2';
+const CACHE_STATIC_NAME = 'static-v33';
+const CACHE_DYNAMIC_NAME = 'dynamic-v3';
 const STATIC_FILES = [
 	'/',
 	'/index.html',
 	'/offline.html',
 	'/src/js/app.js',
+	'/src/js/utility.js',
 	'/src/js/feed.js',
 	'/src/js/idb.js',
 	'/src/js/promise.js',
@@ -117,21 +118,17 @@ self.addEventListener('sync', function(event) {
 		event.waitUntil(
 			readAllData('sync-posts').then(function(data) {
 				for (let dt of data) {
+					const postData = new FormData();
+					postData.append('id', dt.id);
+					postData.append('title', dt.title);
+					postData.append('location', dt.location);
+					postData.append('file', dt.picture, dt.id + '.png');
+
 					fetch(
 						'https://us-central1-pwa-gram-84973.cloudfunctions.net/storePostData',
 						{
 							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								Accept: 'application/json',
-							},
-							body: JSON.stringify({
-								id: dt.id,
-								title: dt.title,
-								location: dt.location,
-								image:
-									'https://firebasestorage.googleapis.com/v0/b/pwa-gram-84973.appspot.com/o/sf-boat.jpg?alt=media&token=3a6e141c-ece2-4236-90ba-2dd5cedc0b83',
-							}),
+							body: postData,
 						}
 					)
 						.then(function(res) {
