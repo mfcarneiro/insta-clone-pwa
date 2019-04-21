@@ -1,28 +1,32 @@
 {
-  "name": "pwa-gram",
-  "version": "1.0.0",
-  "description": "A simple clone of Instagram",
-  "main": "index.js",
-  "scripts": {
-    "start": "http-server -c-1"
-  },
-  "keywords": [
-    "pwa",
-    "progressive",
-    "web",
-    "app"
-  ],
-  "author": "Matheus Felipe",
-  "license": "MIT",
-  "devDependencies": {
-    "eslint": "^5.16.0",
-    "eslint-config-prettier": "^4.1.0",
-    "http-server": "^0.10.0"
-  },
-  "maintainers": [
-    "mfcarneiro"
-  ],
-  "dependencies": {
-    "workbox-cli": "^2"
-  }
+	"name": "pwa-gram",
+	"version": "1.0.0",
+	"description": "A simple clone of Instagram",
+	"main": "index.js",
+	"scripts": {
+		"start": "http-server -c-1",
+		"generate-sw": "workbox inject:manifest",
+		"minify": "uglifyjs public/src/js/app.js -o public/src/js/app.min.js --compress --mangle && uglifyjs public/src/js/feed.js -o public/src/js/feed.min.js --compress --mangle && uglifyjs public/src/js/fetch.js -o public/src/js/fetch.min.js --compress --mangle && uglifyjs public/src/js/idb.js -o public/src/js/idb.min.js --compress --mangle && uglifyjs public/src/js/promise.js -o public/src/js/promise.min.js --compress --mangle && uglifyjs public/src/js/utility.js -o public/src/js/utility.min.js --compress --mangle",
+		"build": "yarn run minify && yarn run generate-sw"
+	},
+	"keywords": [
+		"pwa",
+		"progressive",
+		"web",
+		"app"
+	],
+	"author": "Matheus Felipe",
+	"license": "MIT",
+	"devDependencies": {
+		"eslint": "^5.16.0",
+		"eslint-config-prettier": "^4.1.0",
+		"http-server": "^0.10.0",
+		"uglify-es": "^3.3.9"
+	},
+	"maintainers": [
+		"mfcarneiro"
+	],
+	"dependencies": {
+		"workbox-cli": "^2"
+	}
 }

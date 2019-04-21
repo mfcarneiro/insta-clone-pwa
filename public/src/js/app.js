@@ -11,7 +11,7 @@ if (!window.Promise) {
 
 if ('serviceWorker' in navigator) {
 	navigator.serviceWorker
-		.register('/sw.js')
+		.register('/service-worker.js')
 		.then(function() {
 			console.log('Service worker registered!');
 		})
@@ -105,7 +105,7 @@ function configurePushSubscription() {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'Accept': 'application/json',
+					Accept: 'application/json',
 				},
 				body: JSON.stringify(newSubscription),
 			});
